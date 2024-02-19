@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.After;
 import org.junit.Test;
+import org.mockito.internal.matchers.ArrayEquals;
 import org.mockitoutil.Stopwatch;
 
 public class AsyncTestingTest {
@@ -51,5 +52,7 @@ public class AsyncTestingTest {
 
         // and the async has actually ran:
         assertEquals(1, value.get());
+
+        ArrayEquals.printBranchCoverage();
     }
 }
