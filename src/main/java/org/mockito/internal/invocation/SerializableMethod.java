@@ -97,42 +97,83 @@ public class SerializableMethod implements Serializable, MockitoMethod {
         return 1;
     }
 
+    public static void printBranchCoverage() {
+        int cov = 0;
+        for (int i = 0; i < branches.length; i++) {
+            if (branches[i]) {
+                System.out.println("[SerializableMethod.java] [@equals] Branch " + i + ": True ");
+                cov++;
+            }
+            else {
+                System.out.println("[SerializableMethod.java] [@equals] Branch " + i + ": False ");
+            }
+        }
+        double result = ((double) cov / BRANCH_NO) * 100;
+        System.out.println("[SerializableMethod.java] [@equals] Branch hits: " + cov + " (" + result + "%)");
+    }
+
+    private static final int BRANCH_NO = 23;
+    private static boolean branches[] = new boolean[BRANCH_NO];
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
+            branches[0] = true;
             return true;
         }
+        branches[1] = true;
         if (obj == null) {
+            branches[2] = true;
             return false;
         }
+        branches[3] = true;
         if (getClass() != obj.getClass()) {
+            branches[4] = true;
             return false;
         }
+        branches[5] = true;
         SerializableMethod other = (SerializableMethod) obj;
         if (declaringClass == null) {
+            branches[6] = true;
             if (other.declaringClass != null) {
+                branches[7] = true;
                 return false;
             }
+            branches[8] = true;
         } else if (!declaringClass.equals(other.declaringClass)) {
+            branches[9] = true;
             return false;
         }
+        branches[10] = true;
         if (methodName == null) {
+            branches[11] = true;
             if (other.methodName != null) {
+                branches[12] = true;
                 return false;
             }
+            branches[13] = true;
         } else if (!methodName.equals(other.methodName)) {
+            branches[14] = true;
             return false;
         }
+        branches[15] = true;
         if (!Arrays.equals(parameterTypes, other.parameterTypes)) {
+            branches[16] = true;
             return false;
         }
+        branches[17] = true;
         if (returnType == null) {
+            branches[18] = true;
             if (other.returnType != null) {
+                branches[19] = true;
                 return false;
             }
+            branches[20] = true;
         } else if (!returnType.equals(other.returnType)) {
+            branches[21] = true;
             return false;
         }
+        branches[22] = true;
         return true;
     }
 }
