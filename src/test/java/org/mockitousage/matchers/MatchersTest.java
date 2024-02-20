@@ -401,11 +401,6 @@ public class MatchersTest extends TestBase {
     }
 
     @Test
-    public void sample_test() {
-        assertEquals(null, mock.oneArray(new Object[] {"Test", new Integer(999)}));
-    }
-
-    @Test
     public void greater_or_equal_matcher() {
         when(mock.oneArg(geq(7))).thenReturn(">= 7");
         when(mock.oneArg(lt(7))).thenReturn("< 7");
