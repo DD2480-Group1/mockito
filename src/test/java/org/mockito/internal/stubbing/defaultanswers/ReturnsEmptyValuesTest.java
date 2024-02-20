@@ -9,6 +9,7 @@ import static org.mockito.Mockito.mock;
 
 import java.util.*;
 
+import org.junit.AfterClass;
 import org.junit.Assume;
 import org.junit.Test;
 import org.mockito.invocation.Invocation;
@@ -17,6 +18,11 @@ import org.mockitoutil.TestBase;
 public class ReturnsEmptyValuesTest extends TestBase {
 
     private final ReturnsEmptyValues values = new ReturnsEmptyValues();
+
+    @AfterClass
+    public static void printCoverageMetrics() {
+        ReturnsEmptyValues.printBranchCoverage();
+    }
 
     @Test
     public void should_return_empty_collections_or_null_for_non_collections() {

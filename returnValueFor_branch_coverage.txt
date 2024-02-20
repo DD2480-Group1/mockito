@@ -1,0 +1,24 @@
+[ReturnsEmptyValues.java] [@returnValueFor] Branch 0: True
+[ReturnsEmptyValues.java] [@returnValueFor] Branch 1: True
+[ReturnsEmptyValues.java] [@returnValueFor] Branch 2: True
+[ReturnsEmptyValues.java] [@returnValueFor] Branch 3: True
+[ReturnsEmptyValues.java] [@returnValueFor] Branch 4: True
+[ReturnsEmptyValues.java] [@returnValueFor] Branch 5: True
+[ReturnsEmptyValues.java] [@returnValueFor] Branch 6: True
+[ReturnsEmptyValues.java] [@returnValueFor] Branch 7: True
+[ReturnsEmptyValues.java] [@returnValueFor] Branch 8: True
+[ReturnsEmptyValues.java] [@returnValueFor] Branch 9: True
+[ReturnsEmptyValues.java] [@returnValueFor] Branch 10: True
+[ReturnsEmptyValues.java] [@returnValueFor] Branch 11: True
+[ReturnsEmptyValues.java] [@returnValueFor] Branch 12: True
+[ReturnsEmptyValues.java] [@returnValueFor] Branch 13: True
+[ReturnsEmptyValues.java] [@returnValueFor] Branch 14: True
+[ReturnsEmptyValues.java] [@returnValueFor] Branch 15: True
+[ReturnsEmptyValues.java] [@returnValueFor] Branch 16: True
+[ReturnsEmptyValues.java] [@returnValueFor] Branch 17: True
+[ReturnsEmptyValues.java] [@returnValueFor] Branch 18: True
+[ReturnsEmptyValues.java] [@returnValueFor] Branch 19: True
+[ReturnsEmptyValues.java] [@returnValueFor] Branch 20: True
+[ReturnsEmptyValues.java] [@returnValueFor] Branch 21: False
+[ReturnsEmptyValues.java] [@returnValueFor] Branch 22: True
+[ReturnsEmptyValues.java] [@returnValueFor] Branch hits: 22 (95.65217391304348%)
