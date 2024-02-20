@@ -135,21 +135,7 @@ class SubclassBytecodeGenerator implements BytecodeGenerator {
                                 MockMethodInterceptor.ForHashCode.class,
                                 MockMethodInterceptor.ForEquals.class);
         ClassLoader contextLoader = currentThread().getContextClassLoader();
-        boolean shouldIncludeContextLoader = true;
-        if (needsSamePackageClassLoader(features)) {
-            // For the generated class to access package-private methods, it must be defined by the
-            // same classloader as its type. All the other added classloaders are required to load
-            // the type; if the context classloader is a child of the mocked type's defining
-            // classloader, it will break a mock that would have worked. Check if the context class
-            // loader is a child of the classloader we'd otherwise use, and possibly skip it.
-            ClassLoader candidateLoader = loaderBuilder.build();
-            for (ClassLoader parent = contextLoader; parent != null; parent = parent.getParent()) {
-                if (parent == candidateLoader) {
-                    shouldIncludeContextLoader = false;
-                    break;
-                }
-            }
-        }
+        boolean shouldIncludeContextLoader = isShouldIncludeContextLoader(features, loaderBuilder, contextLoader);
         if (shouldIncludeContextLoader) {
             loaderBuilder = loaderBuilder.appendMostSpecific(contextLoader);
         }
@@ -234,6 +220,16 @@ class SubclassBytecodeGenerator implements BytecodeGenerator {
         // consider the order of these interfaces and the same mock class might be reused for
         // either order. Also, it does not have clean semantics as annotations are not normally
         // preserved for interfaces in Java.
+        Annotation[] annotationsOnType = getAnnotations(features);
+        DynamicType.Builder<T> builder = gettBuilder(features, target, name, annotationsOnType, classLoader);
+        return builder.make()
+                .load(
+                        classLoader,
+                        loader.resolveStrategy(features.mockedType, classLoader, localMock))
+                .getLoaded();
+    }
+
+    private static <T> Annotation[] getAnnotations(MockFeatures<T> features) {
         Annotation[] annotationsOnType;
         if (features.stripAnnotations) {
             annotationsOnType = new Annotation[0];
@@ -242,6 +238,10 @@ class SubclassBytecodeGenerator implements BytecodeGenerator {
         } else {
             annotationsOnType = new Annotation[0];
         }
+        return annotationsOnType;
+    }
+
+    private <T> DynamicType.Builder<T> gettBuilder(MockFeatures<T> features, Class<T> target, String name, Annotation[] annotationsOnType, ClassLoader classLoader) {
         DynamicType.Builder<T> builder =
                 byteBuddy
                         .subclass(target)
@@ -293,11 +293,24 @@ class SubclassBytecodeGenerator implements BytecodeGenerator {
                                     .or(returns(isPackagePrivate()))
                                     .or(hasParameters(whereAny(hasType(isPackagePrivate())))));
         }
-        return builder.make()
-                .load(
-                        classLoader,
-                        loader.resolveStrategy(features.mockedType, classLoader, localMock))
-                .getLoaded();
+        return builder;
+    }
+
+    private static <T> boolean isShouldIncludeContextLoader(MockFeatures<T> features, MultipleParentClassLoader.Builder loaderBuilder, ClassLoader contextLoader) {
+        if (needsSamePackageClassLoader(features)) {
+            // For the generated class to access package-private methods, it must be defined by the
+            // same classloader as its type. All the other added classloaders are required to load
+            // the type; if the context classloader is a child of the mocked type's defining
+            // classloader, it will break a mock that would have worked. Check if the context class
+            // loader is a child of the classloader we'd otherwise use, and possibly skip it.
+            ClassLoader candidateLoader = loaderBuilder.build();
+            for (ClassLoader parent = contextLoader; parent != null; parent = parent.getParent()) {
+                if (parent == candidateLoader) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     private static CharSequence suffix(MockFeatures<?> features) {
