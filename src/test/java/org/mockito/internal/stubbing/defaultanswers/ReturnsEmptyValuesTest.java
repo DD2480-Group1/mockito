@@ -176,6 +176,24 @@ public class ReturnsEmptyValuesTest extends TestBase {
         assertEquals("seconds of empty " + fqcn, 0L, seconds);
     }
 
+    @Test
+    public void should_return_empty_period() throws Exception {
+        // given
+        final String fqcn = "java.time.Period";
+        final Class<?> periodClass = getClassOrSkipTest(fqcn);
+
+        // when
+        final Object period = values.returnValueFor(periodClass);
+        final int days = (Integer) periodClass.getMethod("getDays").invoke(period);
+        final int months = (Integer) periodClass.getMethod("getMonths").invoke(period);
+        final int years = (Integer) periodClass.getMethod("getYears").invoke(period);
+
+        // then
+        assertEquals("days of empty " + fqcn, 0, days);
+        assertEquals("months of empty " + fqcn, 0, months);
+        assertEquals("years of empty " + fqcn, 0, years);
+    }
+
     /**
      * Tries to load the given class. If the class is not found, the complete test is skipped.
      */
