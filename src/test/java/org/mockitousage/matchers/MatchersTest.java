@@ -61,6 +61,7 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.mockito.exceptions.verification.WantedButNotInvoked;
 import org.mockito.exceptions.verification.opentest4j.ArgumentsAreDifferent;
+import org.mockito.internal.matchers.ArrayEquals;
 import org.mockitousage.IMethods;
 import org.mockitoutil.TestBase;
 
@@ -398,6 +399,36 @@ public class MatchersTest extends TestBase {
 
         assertEquals(null, mock.oneArray(new boolean[] {true, false}));
         assertEquals(null, mock.oneArray(new boolean[] {true, true, false}));
+    }
+
+    @Test
+    public void test_cover_missing_branches() {
+        ArrayEquals ae = new ArrayEquals(new boolean[] {false});
+        assertEquals(false, ae.matches(new Object[] {"Test"}));
+
+        ae = new ArrayEquals(new byte[] {1});
+        assertEquals(false, ae.matches(new Object[] {"Test"}));
+
+        ae = new ArrayEquals(new char[] {1});
+        assertEquals(false, ae.matches(new Object[] {"Test"}));
+
+        ae = new ArrayEquals(new double[] {1});
+        assertEquals(false, ae.matches(new Object[] {"Test"}));
+
+        ae = new ArrayEquals(new float[] {1});
+        assertEquals(false, ae.matches(new Object[] {"Test"}));
+
+        ae = new ArrayEquals(new int[] {1});
+        assertEquals(false, ae.matches(new Object[] {"Test"}));
+
+        ae = new ArrayEquals(new long[] {1});
+        assertEquals(false, ae.matches(new Object[] {"Test"}));
+
+        ae = new ArrayEquals(new short[] {1});
+        assertEquals(false, ae.matches(new Object[] {"Test"}));
+
+        ae = new ArrayEquals(new Object[] {1});
+        assertEquals(false, ae.matches(new int[] {999}));
     }
 
     @Test
