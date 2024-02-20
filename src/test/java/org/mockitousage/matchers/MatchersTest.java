@@ -322,6 +322,17 @@ public class MatchersTest extends TestBase {
     }
 
     @Test
+    public void test_cover_branch_2() {
+        Object[] nullArray = null;
+        Object[] notNullArray = new Object[] {1};
+        when(
+            mock.oneArray(aryEq(notNullArray))
+        ).thenReturn("null");
+
+        assertEquals(null, mock.oneArray(nullArray));
+    }
+
+    @Test
     public void should_use_smart_equals_for_arrays() throws Exception {
         // issue 143
         mock.arrayMethod(new String[] {"one"});
@@ -387,6 +398,11 @@ public class MatchersTest extends TestBase {
 
         assertEquals(null, mock.oneArray(new boolean[] {true, false}));
         assertEquals(null, mock.oneArray(new boolean[] {true, true, false}));
+    }
+
+    @Test
+    public void sample_test() {
+        assertEquals(null, mock.oneArray(new Object[] {"Test", new Integer(999)}));
     }
 
     @Test
