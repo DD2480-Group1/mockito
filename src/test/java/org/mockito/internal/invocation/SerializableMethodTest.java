@@ -10,6 +10,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
 import java.lang.reflect.Method;
 
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockitoutil.TestBase;
@@ -25,6 +26,11 @@ public class SerializableMethodTest extends TestBase {
         args = new Class<?>[0];
         toStringMethod = this.getClass().getMethod("toString", args);
         method = new SerializableMethod(toStringMethod);
+    }
+
+    @AfterClass
+    public static void printCoverageMetrics() {
+        SerializableMethod.printBranchCoverage();
     }
 
     @Test
