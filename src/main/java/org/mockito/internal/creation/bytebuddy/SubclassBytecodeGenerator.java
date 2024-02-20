@@ -47,7 +47,9 @@ import org.mockito.internal.creation.bytebuddy.ByteBuddyCrossClassLoaderSerializ
 import org.mockito.internal.creation.bytebuddy.MockMethodInterceptor.DispatcherDefaultingToRealMethod;
 import org.mockito.mock.SerializableMode;
 
-class SubclassBytecodeGenerator implements BytecodeGenerator {
+import javax.swing.*;
+
+public class SubclassBytecodeGenerator implements BytecodeGenerator {
 
     private static final String CODEGEN_PACKAGE = "org.mockito.codegen.";
 
@@ -93,7 +95,8 @@ class SubclassBytecodeGenerator implements BytecodeGenerator {
             // package private methods.
             return true;
         }
-        if (hasNonPublicTypeReference(features.mockedType)) {
+        if (hasNonPublicTypeReference
+            (features.mockedType)) {
             return true;
         }
 
@@ -122,6 +125,31 @@ class SubclassBytecodeGenerator implements BytecodeGenerator {
         return false;
     }
 
+    private static final int BRANCHES = 54;
+    private static final boolean[] branches = new boolean[BRANCHES];
+
+    private static void branchReached(int index) {
+        branches[index] = true;
+        if (branches[index]) {
+            return;
+        }
+        System.out.println("Branch " + index + " reached");
+    }
+
+    public static void printBranchCoverage() {
+        int covered = 0;
+        for (int i = 0; i < BRANCHES; i++) {
+            if (branches[i]) {
+                System.out.println("Branch " + i + " reached");
+                covered++;
+            }
+            else {
+                System.out.println("Branch " + i + " not reached");
+            }
+        }
+        double coverage = (double) covered / BRANCHES;
+        System.out.println("Branch coverage: " + coverage);
+    }
     @Override
     public <T> Class<? extends T> mockClass(MockFeatures<T> features) {
         MultipleParentClassLoader.Builder loaderBuilder =
@@ -137,6 +165,7 @@ class SubclassBytecodeGenerator implements BytecodeGenerator {
         ClassLoader contextLoader = currentThread().getContextClassLoader();
         boolean shouldIncludeContextLoader = true;
         if (needsSamePackageClassLoader(features)) {
+            branchReached(0);
             // For the generated class to access package-private methods, it must be defined by the
             // same classloader as its type. All the other added classloaders are required to load
             // the type; if the context classloader is a child of the mocked type's defining
@@ -144,14 +173,27 @@ class SubclassBytecodeGenerator implements BytecodeGenerator {
             // loader is a child of the classloader we'd otherwise use, and possibly skip it.
             ClassLoader candidateLoader = loaderBuilder.build();
             for (ClassLoader parent = contextLoader; parent != null; parent = parent.getParent()) {
+                branchReached(1);
                 if (parent == candidateLoader) {
+                    branchReached(2);
                     shouldIncludeContextLoader = false;
                     break;
                 }
+                else {
+                    branchReached(3);
+                }
             }
         }
+        else {
+            branchReached(4);
+        }
+
         if (shouldIncludeContextLoader) {
+            branchReached(5);
             loaderBuilder = loaderBuilder.appendMostSpecific(contextLoader);
+        }
+        else {
+            branchReached(6);
         }
         ClassLoader classLoader = loaderBuilder.build();
 
@@ -162,23 +204,73 @@ class SubclassBytecodeGenerator implements BytecodeGenerator {
         // This also requires that we are able to access the package of the mocked class either by
         // override or explicit
         // privilege given by the target package being opened to Mockito.
-        boolean localMock =
-                classLoader == features.mockedType.getClassLoader()
-                        && features.serializableMode != SerializableMode.ACROSS_CLASSLOADERS
-                        && !isComingFromJDK(features.mockedType)
-                        && (loader.isDisrespectingOpenness()
-                                || handler.isOpened(features.mockedType, MockAccess.class))
-                        && !GraalImageCode.getCurrent().isDefined();
+
+        boolean localMock;
+        if (classLoader == features.mockedType.getClassLoader()) {
+            branchReached(7);
+            if (features.serializableMode != SerializableMode.ACROSS_CLASSLOADERS) {
+                branchReached(8);
+                if (!isComingFromJDK(features.mockedType)) {
+                    branchReached(9);
+                    if (loader.isDisrespectingOpenness()) {
+                        branchReached(10);
+                        localMock = true;
+                    }
+                    else {
+                        branchReached(11);
+                        if (handler.isOpened(features.mockedType, MockAccess.class)) {
+                            branchReached(12);
+                            localMock = true;
+                        }
+                        else {
+                            branchReached(13);
+                            localMock = false;
+                        }
+                    }
+                }
+                else {
+                    branchReached(14);
+                    localMock = false;
+                }
+            }
+            else {
+                branchReached(15);
+                localMock = false;
+            }
+        }
+        else {
+            branchReached(16);
+            localMock = false;
+        }
+
         String typeName;
-        if (localMock
-                || (loader instanceof MultipleParentClassLoader
-                        && !isComingFromJDK(features.mockedType))) {
+        if (localMock)
+        {
+            branchReached(17);
             typeName = features.mockedType.getName();
-        } else {
-            typeName =
-                    InjectionBase.class.getPackage().getName()
-                            + "."
-                            + features.mockedType.getSimpleName();
+        }
+        else
+        {
+            branchReached(18);
+            if (loader instanceof MultipleParentClassLoader)
+            {
+                branchReached(19);
+                if (!isComingFromJDK(features.mockedType))
+                {
+                    branchReached(20);
+                    typeName = features.mockedType.getName();
+                }
+                else
+                {
+                    branchReached(21);
+                    typeName = InjectionBase.class.getPackage().getName() + "." + features.mockedType.getSimpleName();
+                }
+            }
+            else
+            {
+                branchReached(22);
+                typeName = InjectionBase.class.getPackage().getName() + "." + features.mockedType.getSimpleName();
+            }
         }
         String name =
                 String.format(
@@ -190,16 +282,30 @@ class SubclassBytecodeGenerator implements BytecodeGenerator {
                                 : RandomString.make());
 
         if (localMock) {
+            branchReached(23);
             handler.adjustModuleGraph(features.mockedType, MockAccess.class, false, true);
+            boolean innerLoopReached = false;
             for (Class<?> iFace : features.interfaces) {
+                innerLoopReached = true;
+                branchReached(24);
                 handler.adjustModuleGraph(iFace, features.mockedType, true, false);
                 handler.adjustModuleGraph(features.mockedType, iFace, false, true);
             }
+            if (!innerLoopReached) {
+                branchReached(25);
+            }
         } else {
+            branchReached(26);
             boolean exported = handler.isExported(features.mockedType);
             Iterator<Class<?>> it = features.interfaces.iterator();
+            boolean innerLoopReached = false;
             while (exported && it.hasNext()) {
+                branchReached(27);
+                innerLoopReached = true;
                 exported = handler.isExported(it.next());
+            }
+            if (!innerLoopReached) {
+                branchReached(28);
             }
             // We check if all mocked types are exported without qualification to avoid generating a
             // hook type.
@@ -207,28 +313,60 @@ class SubclassBytecodeGenerator implements BytecodeGenerator {
             // makes this a
             // worthy performance optimization.
             if (exported) {
+                branchReached(29);
+                boolean innerLoopReached2 = false;
                 assertVisibility(features.mockedType);
                 for (Class<?> iFace : features.interfaces) {
+                    branchReached(30);
+                    innerLoopReached2 = true;
                     assertVisibility(iFace);
                 }
+                if (!innerLoopReached2) {
+                    branchReached(31);
+                }
             } else {
+                branchReached(32);
                 Class<?> hook = handler.injectionBase(classLoader, typeName);
                 assertVisibility(features.mockedType);
                 handler.adjustModuleGraph(features.mockedType, hook, true, false);
+                boolean innerLoopReached3 = false;
                 for (Class<?> iFace : features.interfaces) {
+                    branchReached(33);
+                    innerLoopReached3 = true;
                     assertVisibility(iFace);
                     handler.adjustModuleGraph(iFace, hook, true, false);
                 }
+                if (!innerLoopReached3) {
+                    branchReached(34);
+                }
             }
+
         }
         // Graal requires that the byte code of classes is identical what requires that interfaces
         // are always defined in the exact same order. Therefore, we add an interface to the
         // interface set if not mocking a class when Graal is active.
+
+//        Class<T> target =
+//                GraalImageCode.getCurrent().isDefined() && features.mockedType.isInterface()
+//                        ? (Class<T>) Object.class
+//                        : features.mockedType;
         @SuppressWarnings("unchecked")
-        Class<T> target =
-                GraalImageCode.getCurrent().isDefined() && features.mockedType.isInterface()
-                        ? (Class<T>) Object.class
-                        : features.mockedType;
+Class<T> target;
+        if (GraalImageCode.getCurrent().isDefined()) {
+            branchReached(35);
+            if (features.mockedType.isInterface()) {
+                branchReached(36);
+                target = (Class<T>) Object.class;
+            }
+            else {
+                branchReached(37);
+                target = features.mockedType;
+            }
+        }
+        else {
+            branchReached(38);
+            target = features.mockedType;
+        }
         // If we create a mock for an interface with additional interfaces implemented, we do not
         // want to preserve the annotations of either interface. The caching mechanism does not
         // consider the order of these interfaces and the same mock class might be reused for
@@ -236,62 +374,90 @@ class SubclassBytecodeGenerator implements BytecodeGenerator {
         // preserved for interfaces in Java.
         Annotation[] annotationsOnType;
         if (features.stripAnnotations) {
+            branchReached(39);
             annotationsOnType = new Annotation[0];
         } else if (!features.mockedType.isInterface() || features.interfaces.isEmpty()) {
+            branchReached(40);
             annotationsOnType = features.mockedType.getAnnotations();
         } else {
+            branchReached(41);
             annotationsOnType = new Annotation[0];
         }
-        DynamicType.Builder<T> builder =
-                byteBuddy
-                        .subclass(target)
-                        .name(name)
-                        .ignoreAlso(BytecodeGenerator.isGroovyMethod(false))
-                        .annotateType(annotationsOnType)
-                        .implement(
-                                new ArrayList<>(
-                                        GraalImageCode.getCurrent().isDefined()
-                                                ? sortedSerializable(
-                                                        features.interfaces,
-                                                        GraalImageCode.getCurrent().isDefined()
-                                                                        && features.mockedType
-                                                                                .isInterface()
-                                                                ? features.mockedType
-                                                                : void.class)
-                                                : features.interfaces))
-                        .method(matcher)
-                        .intercept(dispatcher)
-                        .transform(withModifiers(SynchronizationState.PLAIN))
-                        .attribute(
-                                features.stripAnnotations
-                                        ? MethodAttributeAppender.NoOp.INSTANCE
-                                        : INCLUDING_RECEIVER)
-                        .serialVersionUid(42L)
-                        .defineField("mockitoInterceptor", MockMethodInterceptor.class, PRIVATE)
-                        .implement(MockAccess.class)
-                        .intercept(FieldAccessor.ofBeanProperty())
-                        .method(isHashCode())
-                        .intercept(hashCode)
-                        .method(isEquals())
-                        .intercept(equals);
+
+        boolean cond1 = GraalImageCode.getCurrent().isDefined();
+        boolean cond2 = features.mockedType.isInterface();
+        boolean cond3 = features.stripAnnotations;
+
+        DynamicType.Builder<T> builder = byteBuddy
+            .subclass(target)
+            .name(name)
+            .ignoreAlso(BytecodeGenerator.isGroovyMethod(false))
+            .annotateType(annotationsOnType)
+            .method(matcher)
+            .intercept(dispatcher)
+            .transform(withModifiers(SynchronizationState.PLAIN))
+            .attribute(cond3 ? MethodAttributeAppender.NoOp.INSTANCE : INCLUDING_RECEIVER)
+            .serialVersionUid(42L)
+            .defineField("mockitoInterceptor", MockMethodInterceptor.class, PRIVATE)
+            .implement(MockAccess.class)
+            .intercept(FieldAccessor.ofBeanProperty())
+            .method(isHashCode())
+            .intercept(hashCode)
+            .method(isEquals())
+            .intercept(equals);
+        if (cond1) {
+            branchReached(42);
+            if (cond2) {
+                branchReached(43);
+                builder = builder.implement(new ArrayList<>(sortedSerializable(features.interfaces, features.mockedType)));
+            }
+            else {
+                branchReached(44);
+                builder = builder.implement(new ArrayList<>(sortedSerializable(features.interfaces, void.class)));
+            }
+        }
+        else {
+            branchReached(45);
+            builder = builder.implement(new ArrayList<>(features.interfaces));
+        }
+        if (cond3) {
+            branchReached(46);
+        }
+        else {
+            branchReached(47);
+        }
+
         if (features.serializableMode == SerializableMode.ACROSS_CLASSLOADERS) {
+            branchReached(48);
             builder =
                     builder.implement(CrossClassLoaderSerializableMock.class)
                             .intercept(writeReplace);
         }
+        else {
+            branchReached(49);
+        }
         if (readReplace != null) {
+            branchReached(50);
             builder =
                     builder.defineMethod("readObject", void.class, Visibility.PRIVATE)
                             .withParameters(ObjectInputStream.class)
                             .throwing(ClassNotFoundException.class, IOException.class)
                             .intercept(readReplace);
         }
+        else {
+            branchReached(51);
+        }
+
         if (name.startsWith(CODEGEN_PACKAGE) || classLoader instanceof MultipleParentClassLoader) {
+            branchReached(52);
             builder =
                     builder.ignoreAlso(
                             isPackagePrivate()
                                     .or(returns(isPackagePrivate()))
                                     .or(hasParameters(whereAny(hasType(isPackagePrivate())))));
+        }
+        else {
+            branchReached(53);
         }
         return builder.make()
                 .load(
