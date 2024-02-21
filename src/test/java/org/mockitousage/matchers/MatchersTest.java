@@ -322,8 +322,14 @@ public class MatchersTest extends TestBase {
         }
     }
 
+    /**
+     *  Tests whether the actual array (given in parameters) equals to null and successfully deal with it.
+     *  Increases branch coverage for matches, issue 9.
+     *  expected: catch null array
+     */
     @Test
-    public void test_cover_branch_2() {
+    public void should_actual_array_equals_deal_with_null_array() {
+        // issue 9
         Object[] nullArray = null;
         Object[] notNullArray = new Object[] {1};
         when(
@@ -331,6 +337,15 @@ public class MatchersTest extends TestBase {
         ).thenReturn("null");
 
         assertEquals(null, mock.oneArray(nullArray));
+
+        mock = mock(IMethods.class);
+
+        try {
+            verify(mock).oneArray(aryEq(nullArray));
+            fail();
+        } catch (WantedButNotInvoked e) {
+            assertThat(e).hasMessageContaining("oneArray(null)");
+        }
     }
 
     @Test
