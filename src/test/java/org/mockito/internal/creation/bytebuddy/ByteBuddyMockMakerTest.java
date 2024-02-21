@@ -12,6 +12,8 @@ import org.mockito.internal.creation.settings.CreationSettings;
 import org.mockito.internal.handler.MockHandlerImpl;
 import org.mockitoutil.TestBase;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class ByteBuddyMockMakerTest extends TestBase {
 
     @Mock private SubclassByteBuddyMockMaker delegate;
@@ -34,5 +36,18 @@ public class ByteBuddyMockMakerTest extends TestBase {
         verify(delegate).getHandler(this);
         verify(delegate).isTypeMockable(Object.class);
         verify(delegate).resetMock(this, handler, creationSettings);
+    }
+
+    @Test
+    public void simple_mock_maker() {
+        ByteBuddyMockMaker mockMaker = new ByteBuddyMockMaker();
+        assertThat(mockMaker).isNotNull();
+    }
+
+    @Test
+    public void test_clear_cache() {
+        ByteBuddyMockMaker mockMaker = new ByteBuddyMockMaker();
+        mockMaker.clearAllCaches();
+        assertThat(mockMaker).isNotNull();
     }
 }

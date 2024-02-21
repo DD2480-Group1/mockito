@@ -8,9 +8,10 @@ import org.junit.Test;
 import org.mockito.Answers;
 import org.mockito.mock.SerializableMode;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.util.Collections;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.internal.creation.bytebuddy.MockFeatures.withMockFeatures;
 import static org.mockitoutil.ClassLoaders.inMemoryClassLoader;
 import static org.mockitoutil.SimpleClassGenerator.makeMarkerInterface;
@@ -19,22 +20,23 @@ public class SubclassBytecodeGeneratorTest {
 
     @Test
     public void test_serializable_mode() throws Exception {
-        ClassLoader classloader_with_life_shorter_than_cache =
+        ClassLoader classLoader =
             inMemoryClassLoader()
                 .withClassDefinition("foo.Bar", makeMarkerInterface("foo.Bar"))
                 .build();
         SubclassBytecodeGenerator subclassBytecodeGenerator = new SubclassBytecodeGenerator();
-        assertNotNull(subclassBytecodeGenerator);
+        assertThat(subclassBytecodeGenerator).isNotNull();
         // create a mock class with serializable mode ACROSS_CLASSLOADERS
         Class<?> the_mock_type =
             subclassBytecodeGenerator.mockClass(
                 withMockFeatures(
-                    classloader_with_life_shorter_than_cache.loadClass("foo.Bar"),
+                    classLoader.loadClass("foo.Bar"),
                     Collections.<Class<?>>emptySet(),
                     SerializableMode.ACROSS_CLASSLOADERS,
                     false,
                     Answers.RETURNS_DEFAULTS));
         // ensure the mock class is not null and is created
-        assertNotNull(the_mock_type);
+        assertThat(the_mock_type).isNotNull();
     }
+
 }
