@@ -221,7 +221,7 @@ class SubclassBytecodeGenerator implements BytecodeGenerator {
         // either order. Also, it does not have clean semantics as annotations are not normally
         // preserved for interfaces in Java.
         Annotation[] annotationsOnType = getAnnotations(features);
-        DynamicType.Builder<T> builder = gettBuilder(features, target, name, annotationsOnType, classLoader);
+        DynamicType.Builder<T> builder = getBuilder(features, target, name, annotationsOnType, classLoader);
         return builder.make()
                 .load(
                         classLoader,
@@ -229,6 +229,12 @@ class SubclassBytecodeGenerator implements BytecodeGenerator {
                 .getLoaded();
     }
 
+    /**
+     * Get the annotations on the type
+     * @param features features of the mock
+     * @return annotations on the type
+     * @param <T> type of the mock
+     */
     private static <T> Annotation[] getAnnotations(MockFeatures<T> features) {
         Annotation[] annotationsOnType;
         if (features.stripAnnotations) {
@@ -241,7 +247,17 @@ class SubclassBytecodeGenerator implements BytecodeGenerator {
         return annotationsOnType;
     }
 
-    private <T> DynamicType.Builder<T> gettBuilder(MockFeatures<T> features, Class<T> target, String name, Annotation[] annotationsOnType, ClassLoader classLoader) {
+    /**
+     * Get the builder for the mock class
+     * @param features features of the mock
+     * @param target target class
+     * @param name name of the mock
+     * @param annotationsOnType annotations on the type
+     * @param classLoader class loader
+     * @return builder for the mock class
+     * @param <T> type of the mock
+     */
+    private <T> DynamicType.Builder<T> getBuilder(MockFeatures<T> features, Class<T> target, String name, Annotation[] annotationsOnType, ClassLoader classLoader) {
         DynamicType.Builder<T> builder =
                 byteBuddy
                         .subclass(target)
