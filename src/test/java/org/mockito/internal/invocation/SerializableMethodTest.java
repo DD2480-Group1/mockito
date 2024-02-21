@@ -70,5 +70,8 @@ public class SerializableMethodTest extends TestBase {
     }
 
     // TODO: add tests for generated equals() method
-
+    @Test
+    public void shouldNotBeEqualForNull() throws Exception {
+        assertFalse(method.equals(null));
+    }
 }
