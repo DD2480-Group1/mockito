@@ -176,6 +176,11 @@ public class ReturnsEmptyValuesTest extends TestBase {
         assertEquals("seconds of empty " + fqcn, 0L, seconds);
     }
 
+    /**
+     * Tests whether the returnValueFor returns an empty Period class when a Period class is given as a parameter.
+     * Increases branch coverage for the returnValueFor method.
+     * expected: returns an empty Period Object
+     */
     @Test
     public void should_return_empty_period() throws Exception {
         // given
