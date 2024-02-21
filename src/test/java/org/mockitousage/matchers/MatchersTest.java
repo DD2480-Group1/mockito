@@ -61,6 +61,7 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.mockito.exceptions.verification.WantedButNotInvoked;
 import org.mockito.exceptions.verification.opentest4j.ArgumentsAreDifferent;
+import org.mockito.internal.matchers.ArrayEquals;
 import org.mockitousage.IMethods;
 import org.mockitoutil.TestBase;
 
@@ -321,6 +322,32 @@ public class MatchersTest extends TestBase {
         }
     }
 
+    /**
+     *  Tests whether the actual array (given in parameters) equals to null and successfully deal with it.
+     *  Increases branch coverage for matches, issue 9.
+     *  expected: catch null array
+     */
+    @Test
+    public void should_actual_array_equals_deal_with_null_array() {
+        // issue 9
+        Object[] nullArray = null;
+        Object[] notNullArray = new Object[] {1};
+        when(
+            mock.oneArray(aryEq(notNullArray))
+        ).thenReturn("null");
+
+        assertEquals(null, mock.oneArray(nullArray));
+
+        mock = mock(IMethods.class);
+
+        try {
+            verify(mock).oneArray(aryEq(nullArray));
+            fail();
+        } catch (WantedButNotInvoked e) {
+            assertThat(e).hasMessageContaining("oneArray(null)");
+        }
+    }
+
     @Test
     public void should_use_smart_equals_for_arrays() throws Exception {
         // issue 143
@@ -387,6 +414,41 @@ public class MatchersTest extends TestBase {
 
         assertEquals(null, mock.oneArray(new boolean[] {true, false}));
         assertEquals(null, mock.oneArray(new boolean[] {true, true, false}));
+    }
+
+    /**
+     *  Make sure matches returns false for when no match is made.
+     *  Increases branch coverage for matches, issue 9.
+     *  expected: matches return false
+     */
+    @Test
+    public void array_equals_matcher_for_no_matches() {
+        ArrayEquals ae = new ArrayEquals(new boolean[] {false});
+        assertEquals(false, ae.matches(new Object[] {"Test"}));
+
+        ae = new ArrayEquals(new byte[] {1});
+        assertEquals(false, ae.matches(new Object[] {"Test"}));
+
+        ae = new ArrayEquals(new char[] {1});
+        assertEquals(false, ae.matches(new Object[] {"Test"}));
+
+        ae = new ArrayEquals(new double[] {1});
+        assertEquals(false, ae.matches(new Object[] {"Test"}));
+
+        ae = new ArrayEquals(new float[] {1});
+        assertEquals(false, ae.matches(new Object[] {"Test"}));
+
+        ae = new ArrayEquals(new int[] {1});
+        assertEquals(false, ae.matches(new Object[] {"Test"}));
+
+        ae = new ArrayEquals(new long[] {1});
+        assertEquals(false, ae.matches(new Object[] {"Test"}));
+
+        ae = new ArrayEquals(new short[] {1});
+        assertEquals(false, ae.matches(new Object[] {"Test"}));
+
+        ae = new ArrayEquals(new Object[] {1});
+        assertEquals(false, ae.matches(new int[] {999}));
     }
 
     @Test
