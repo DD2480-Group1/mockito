@@ -416,8 +416,13 @@ public class MatchersTest extends TestBase {
         assertEquals(null, mock.oneArray(new boolean[] {true, true, false}));
     }
 
+    /**
+     *  Make sure matches returns false for when no match is made.
+     *  Increases branch coverage for matches, issue 9.
+     *  expected: matches return false
+     */
     @Test
-    public void test_cover_missing_branches() {
+    public void array_equals_matcher_for_no_matches() {
         ArrayEquals ae = new ArrayEquals(new boolean[] {false});
         assertEquals(false, ae.matches(new Object[] {"Test"}));
 
