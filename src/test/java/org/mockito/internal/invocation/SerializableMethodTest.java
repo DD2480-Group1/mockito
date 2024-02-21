@@ -5,6 +5,9 @@
 package org.mockito.internal.invocation;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doReturn;
 
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
@@ -73,5 +76,94 @@ public class SerializableMethodTest extends TestBase {
     @Test
     public void shouldNotBeEqualForNull() throws Exception {
         assertFalse(method.equals(null));
+    }
+
+    @Test
+    public void shouldNotBeEqualForDifferentMethodNames() throws Exception {
+        Method toStringMethod = String.class.getMethod("toString", args);
+        SerializableMethod methodToString = new SerializableMethod(toStringMethod);
+
+        Method hashCodeMethod = String.class.getMethod("hashCode", args);
+        SerializableMethod methodHashCode = new SerializableMethod(hashCodeMethod);
+
+        assertFalse(methodToString.equals(methodHashCode));
+    }
+
+    @Test
+    public void shouldNotBeEqualForDifferentClassTypes() throws Exception {
+        assertFalse(method.equals(new Object()));
+    }
+
+    @Test
+    public void shouldNotBeEqualForDifferentParameterTypes() throws Exception {
+        Method appendWithInt = StringBuilder.class.getMethod("append", int.class);
+        SerializableMethod method1 = new SerializableMethod(appendWithInt);
+
+        Method appendWithString = StringBuilder.class.getMethod("append", String.class);
+        SerializableMethod method2 = new SerializableMethod(appendWithString);
+
+        assertFalse(method1.equals(method2));
+    }
+
+    @Test
+    public void shouldNotBeEqualWhenDeclaringClassIsNull() throws Exception {
+        // given
+        // utilizing Mockito's mock class for testing, dogfooding
+        Method mockMethod = mock(Method.class);
+        when(mockMethod.getDeclaringClass()).thenReturn(null);
+        when(mockMethod.getParameterTypes()).thenReturn(method.getParameterTypes());
+
+        // when
+        SerializableMethod mockSerializableMethod = new SerializableMethod(mockMethod);
+
+        // then
+        assertFalse(mockSerializableMethod.equals(method));
+    }
+
+    @Test
+    public void shouldNotBeEqualWhenMethodNameIsNull() throws Exception {
+        // given
+        Method mockMethod = mock(Method.class);
+        doReturn(toStringMethod.getDeclaringClass()).when(mockMethod).getDeclaringClass();
+        when(mockMethod.getParameterTypes()).thenReturn(method.getParameterTypes());
+        when(mockMethod.getName()).thenReturn(null);
+
+        // when
+        SerializableMethod mockSerializableMethod = new SerializableMethod(mockMethod);
+
+        // then
+        assertFalse(mockSerializableMethod.equals(method));
+    }
+
+    @Test
+    public void shouldNotBeEqualWhenReturnTypeIsNull() throws Exception {
+        // given
+        Method mockMethod = mock(Method.class);
+        doReturn(toStringMethod.getDeclaringClass()).when(mockMethod).getDeclaringClass();
+        when(mockMethod.getParameterTypes()).thenReturn(method.getParameterTypes());
+        when(mockMethod.getName()).thenReturn(method.getName());
+        when(mockMethod.getReturnType()).thenReturn(null);
+
+        // when
+        SerializableMethod mockSerializableMethod = new SerializableMethod(mockMethod);
+
+        // then
+        assertFalse(mockSerializableMethod.equals(method));
+    }
+
+    @Test
+    public void shouldNotBeEqualForDifferentReturnTypes() throws Exception {
+        // given
+        Method mockMethod = mock(Method.class);
+        doReturn(toStringMethod.getDeclaringClass()).when(mockMethod).getDeclaringClass();
+        when(mockMethod.getParameterTypes()).thenReturn(method.getParameterTypes());
+        when(mockMethod.getName()).thenReturn(method.getName());
+        doReturn(int.class).when(mockMethod).getReturnType();
+
+        // when
+        SerializableMethod mockSerializableMethod = new SerializableMethod(mockMethod);
+
+        // then
+        assertFalse(mockSerializableMethod.equals(method));
     }
 }
