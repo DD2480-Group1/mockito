@@ -9,6 +9,7 @@ import static org.junit.Assert.*;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
 import java.lang.reflect.Method;
+import java.lang.reflect.Field;
 
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -75,6 +76,153 @@ public class SerializableMethodTest extends TestBase {
         assertFalse(new SerializableMethod(testBaseToStringMethod).equals(method));
     }
 
-    // TODO: add tests for generated equals() method
+
+    //
+    // Equals tests
+    //
+
+    @Test
+    public void shouldGiveFalseIfMethodIsNull() throws Exception {
+        Object testNullObj = null;
+        assertFalse(method.equals(testNullObj));
+    }
+
+    @Test
+    public void shouldGiveFalseIfDifferentGetClass() throws Exception {
+        Method m1 = String.class.getMethod("toString", args);
+        assertFalse(method.equals(m1));
+    }
+
+
+    @Test
+    public void shouldBeTrueIfBothDeclareClassAreTrue() throws Exception {
+        SerializableMethod m1 = new SerializableMethod(String.class.getMethod("toString", args));
+        SerializableMethod m2 = new SerializableMethod(String.class.getMethod("toString", args));
+
+        Field f = m1.getClass().getDeclaredField("declaringClass");
+
+        f.setAccessible(true);
+        f.set(m1, null);
+        f.set(m2, null);
+
+        assertTrue(m1.equals(m2));
+    }
+
+    @Test
+    public void shouldBeFalseIfOneDeclaringClassIsNullAndTheOtherIsNot() throws Exception {
+        SerializableMethod m1 = new SerializableMethod(String.class.getMethod("toString", args));
+        SerializableMethod m2 = new SerializableMethod(String.class.getMethod("toString", args));
+
+        Field f = m1.getClass().getDeclaredField("declaringClass");
+
+        f.setAccessible(true);
+        f.set(m1, null);
+
+        assertFalse(m1.equals(m2));
+    }
+
+    @Test
+    public void shouldGiveFalseIfDifferentMethodName() throws Exception {
+        SerializableMethod m1 = new SerializableMethod(String.class.getMethod("toString", args));
+        SerializableMethod m2 = new SerializableMethod(String.class.getMethod("toString", args));
+
+        Field f = m1.getClass().getDeclaredField("methodName");
+
+        f.setAccessible(true);
+        f.set(m1, "someOtherName");
+
+        assertFalse(m1.equals(m2));
+    }
+
+    @Test
+    public void shouldGiveTrueIfBothMethodNamesAreNull() throws Exception {
+        SerializableMethod m1 = new SerializableMethod(String.class.getMethod("toString", args));
+        SerializableMethod m2 = new SerializableMethod(String.class.getMethod("toString", args));
+
+        Field f = m1.getClass().getDeclaredField("methodName");
+
+        f.setAccessible(true);
+        f.set(m1, null);
+        f.set(m2, null);
+
+        assertTrue(m1.equals(m2));
+    }
+
+    @Test
+    public void shouldGiveFalseIfOneMethodNameIsNullAndOtherIsNot() throws Exception {
+        SerializableMethod m1 = new SerializableMethod(String.class.getMethod("toString", args));
+        SerializableMethod m2 = new SerializableMethod(String.class.getMethod("toString", args));
+
+        Field f = m1.getClass().getDeclaredField("methodName");
+
+        f.setAccessible(true);
+        f.set(m1, null);
+
+        assertFalse(m1.equals(m2));
+    }
+
+    @Test
+    public void shouldGiveFalseIfDifferentReturnType() throws Exception {
+        SerializableMethod m1 = new SerializableMethod(String.class.getMethod("toString", args));
+        SerializableMethod m2 = new SerializableMethod(String.class.getMethod("toString", args));
+
+        Field f = m1.getClass().getDeclaredField("returnType");
+
+        f.setAccessible(true);
+
+        Class<?> c1 = String.class;
+        Class<?> c2 = Integer.class;
+
+        f.set(m1, c1);
+        f.set(m2, c2);
+
+        assertFalse(m1.equals(m2));
+    }
+
+    @Test
+    public void shouldGiveTrueIfBothReturnTypesAreNull() throws Exception {
+        SerializableMethod m1 = new SerializableMethod(String.class.getMethod("toString", args));
+        SerializableMethod m2 = new SerializableMethod(String.class.getMethod("toString", args));
+
+        Field f = m1.getClass().getDeclaredField("returnType");
+
+        f.setAccessible(true);
+        f.set(m1, null);
+        f.set(m2, null);
+
+        assertTrue(m1.equals(m2));
+    }
+
+    @Test
+    public void shouldGiveFalseIfOneReturnTypeIsNullOtherIsNot() throws Exception {
+        SerializableMethod m1 = new SerializableMethod(String.class.getMethod("toString", args));
+        SerializableMethod m2 = new SerializableMethod(String.class.getMethod("toString", args));
+
+        Field f = m1.getClass().getDeclaredField("returnType");
+
+        f.setAccessible(true);
+        f.set(m1, null);
+
+        assertFalse(m1.equals(m2));
+    }
+
+    @Test
+    public void shouldGiveFalseIfDifferentParameterTypes() throws Exception {
+        Class<?>[] param1 = new Class<?>[1];
+        Class<?>[] param2 = new Class<?>[1];
+        param1[0] = String.class;
+        param2[0] = Integer.class;
+
+        SerializableMethod m1 = new SerializableMethod(String.class.getMethod("toString", args));
+        SerializableMethod m2 = new SerializableMethod(String.class.getMethod("toString", args));
+
+        Field f = m1.getClass().getDeclaredField("parameterTypes");
+
+        f.setAccessible(true);
+        f.set(m1, param1);
+        f.set(m2,param2);
+
+        assertFalse(m1.equals(m2));
+    }
 
 }
