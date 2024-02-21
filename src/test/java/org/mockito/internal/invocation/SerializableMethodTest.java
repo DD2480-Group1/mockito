@@ -81,19 +81,22 @@ public class SerializableMethodTest extends TestBase {
     // Equals tests
     //
 
+    // A properly defined method should not equal an object that is null
     @Test
     public void shouldGiveFalseIfMethodIsNull() throws Exception {
         Object testNullObj = null;
         assertFalse(method.equals(testNullObj));
     }
 
+    // Two methods with the same properties (like method name, returntype and parameters) should not be equal if the belong to different classes
     @Test
     public void shouldGiveFalseIfDifferentGetClass() throws Exception {
         Method m1 = String.class.getMethod("toString", args);
         assertFalse(method.equals(m1));
     }
 
-
+    // If the declaring class of two methods both are null, and they are otherwise
+    // equal, then the methods should be equal
     @Test
     public void shouldBeTrueIfBothDeclareClassAreTrue() throws Exception {
         SerializableMethod m1 = new SerializableMethod(String.class.getMethod("toString", args));
@@ -108,6 +111,8 @@ public class SerializableMethodTest extends TestBase {
         assertTrue(m1.equals(m2));
     }
 
+    // If two methods are equal in all aspects except one has a declaringClass
+    // that is null, then they should not be equal
     @Test
     public void shouldBeFalseIfOneDeclaringClassIsNullAndTheOtherIsNot() throws Exception {
         SerializableMethod m1 = new SerializableMethod(String.class.getMethod("toString", args));
@@ -121,6 +126,8 @@ public class SerializableMethodTest extends TestBase {
         assertFalse(m1.equals(m2));
     }
 
+    // If two methods are the same in every aspect except for their name, then they
+    // are not equal
     @Test
     public void shouldGiveFalseIfDifferentMethodName() throws Exception {
         SerializableMethod m1 = new SerializableMethod(String.class.getMethod("toString", args));
@@ -134,6 +141,8 @@ public class SerializableMethodTest extends TestBase {
         assertFalse(m1.equals(m2));
     }
 
+    // If two methods are equal in every way, and both of their names
+    // are null, then they are equal.
     @Test
     public void shouldGiveTrueIfBothMethodNamesAreNull() throws Exception {
         SerializableMethod m1 = new SerializableMethod(String.class.getMethod("toString", args));
@@ -148,6 +157,8 @@ public class SerializableMethodTest extends TestBase {
         assertTrue(m1.equals(m2));
     }
 
+    // If two methods are equal in every way, but one methodName is null and the other
+    // is not, then they are not equal.
     @Test
     public void shouldGiveFalseIfOneMethodNameIsNullAndOtherIsNot() throws Exception {
         SerializableMethod m1 = new SerializableMethod(String.class.getMethod("toString", args));
@@ -161,6 +172,8 @@ public class SerializableMethodTest extends TestBase {
         assertFalse(m1.equals(m2));
     }
 
+    // If two methods are equal in every way except they have two different
+    // return types, then they should not be equal.
     @Test
     public void shouldGiveFalseIfDifferentReturnType() throws Exception {
         SerializableMethod m1 = new SerializableMethod(String.class.getMethod("toString", args));
@@ -179,6 +192,8 @@ public class SerializableMethodTest extends TestBase {
         assertFalse(m1.equals(m2));
     }
 
+    // If two methods are equal in every way and both of their
+    // return types are null, then they are equal
     @Test
     public void shouldGiveTrueIfBothReturnTypesAreNull() throws Exception {
         SerializableMethod m1 = new SerializableMethod(String.class.getMethod("toString", args));
@@ -193,6 +208,8 @@ public class SerializableMethodTest extends TestBase {
         assertTrue(m1.equals(m2));
     }
 
+    // If the return type of one method is null and the other is not, then they
+    // are not equal.
     @Test
     public void shouldGiveFalseIfOneReturnTypeIsNullOtherIsNot() throws Exception {
         SerializableMethod m1 = new SerializableMethod(String.class.getMethod("toString", args));
@@ -206,6 +223,8 @@ public class SerializableMethodTest extends TestBase {
         assertFalse(m1.equals(m2));
     }
 
+    // If two methods are equal in every way except they take different
+    // input parameters, then they are not equal.
     @Test
     public void shouldGiveFalseIfDifferentParameterTypes() throws Exception {
         Class<?>[] param1 = new Class<?>[1];
