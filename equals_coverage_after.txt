@@ -1,0 +1,24 @@
+[SerializableMethod.java] [@equals] Branch 0: True
+[SerializableMethod.java] [@equals] Branch 1: True
+[SerializableMethod.java] [@equals] Branch 2: True
+[SerializableMethod.java] [@equals] Branch 3: True
+[SerializableMethod.java] [@equals] Branch 4: True
+[SerializableMethod.java] [@equals] Branch 5: True
+[SerializableMethod.java] [@equals] Branch 6: True
+[SerializableMethod.java] [@equals] Branch 7: True
+[SerializableMethod.java] [@equals] Branch 8: True
+[SerializableMethod.java] [@equals] Branch 9: True
+[SerializableMethod.java] [@equals] Branch 10: True
+[SerializableMethod.java] [@equals] Branch 11: True
+[SerializableMethod.java] [@equals] Branch 12: True
+[SerializableMethod.java] [@equals] Branch 13: True
+[SerializableMethod.java] [@equals] Branch 14: True
+[SerializableMethod.java] [@equals] Branch 15: True
+[SerializableMethod.java] [@equals] Branch 16: True
+[SerializableMethod.java] [@equals] Branch 17: True
+[SerializableMethod.java] [@equals] Branch 18: True
+[SerializableMethod.java] [@equals] Branch 19: True
+[SerializableMethod.java] [@equals] Branch 20: True
+[SerializableMethod.java] [@equals] Branch 21: True
+[SerializableMethod.java] [@equals] Branch 22: True
+[SerializableMethod.java] [@equals] Branch hits: 23 (100.0%)
