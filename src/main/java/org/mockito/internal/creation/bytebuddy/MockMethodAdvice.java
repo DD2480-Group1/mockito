@@ -383,6 +383,33 @@ public class MockMethodAdvice extends MockMethodDispatcher {
             this.identifier = identifier;
         }
 
+        private static final int BRANCHES = 40;
+        private static boolean[] branches = new boolean[BRANCHES];
+
+        private static void branchReached(int id) {
+            // leave if branch already reached
+            if (branches[id]) return;
+            branches[id] = true;
+
+            // todo: write syso to file instead
+            System.out.println("[ArrayEquals.java] [@matches] Branch " + id + " reached.");
+        }
+
+        public static void printBranchCoverage() {
+            int cov = 0;
+            for (int i = 0; i < branches.length; i++) {
+                if (branches[i]) {
+                    System.out.println("[ArrayEquals.java] [@matches] Branch " + i + ": True ");
+                    cov++;
+                } else {
+                    System.out.println("[ArrayEquals.java] [@matches] Branch " + i + ": False ");
+                }
+            }
+            double result = ((double) cov / BRANCHES) * 100;
+            System.out.println(
+                    "[ArrayEquals.java] [@matches] Branch hits: " + cov + " (" + result + "%)");
+        }
+
         @Override
         public MethodVisitor wrap(
                 TypeDescription instrumentedType,
@@ -392,252 +419,321 @@ public class MockMethodAdvice extends MockMethodDispatcher {
                 TypePool typePool,
                 int writerFlags,
                 int readerFlags) {
-            if (instrumentedMethod.isConstructor() && !instrumentedType.represents(Object.class)) {
-                MethodList<MethodDescription.InDefinedShape> constructors =
-                        instrumentedType
-                                .getSuperClass()
-                                .asErasure()
-                                .getDeclaredMethods()
-                                .filter(isConstructor().and(isVisibleTo(instrumentedType)));
-                int arguments = Integer.MAX_VALUE;
-                boolean packagePrivate = true;
-                MethodDescription.InDefinedShape current = null;
-                for (MethodDescription.InDefinedShape constructor : constructors) {
-                    // We are choosing the shortest constructor with regards to arguments.
-                    // Yet, we prefer a non-package-private constructor since they require
-                    // the super class to be on the same class loader.
-                    if (constructor.getParameters().size() < arguments
-                            && (packagePrivate || !constructor.isPackagePrivate())) {
-                        arguments = constructor.getParameters().size();
-                        packagePrivate = constructor.isPackagePrivate();
-                        current = constructor;
+            if (instrumentedMethod.isConstructor()) {
+                if (!instrumentedType.represents(Object.class)) {
+                    MethodList<MethodDescription.InDefinedShape> constructors =
+                            instrumentedType
+                                    .getSuperClass()
+                                    .asErasure()
+                                    .getDeclaredMethods()
+                                    .filter(isConstructor().and(isVisibleTo(instrumentedType)));
+                    int arguments = Integer.MAX_VALUE;
+                    boolean packagePrivate = true;
+                    MethodDescription.InDefinedShape current = null;
+                    for (MethodDescription.InDefinedShape constructor : constructors) {
+                        // We are choosing the shortest constructor with regards to arguments.
+                        // Yet, we prefer a non-package-private constructor since they require
+                        // the super class to be on the same class loader.
+                        if (constructor.getParameters().size() < arguments) {
+                            if (packagePrivate) {
+                                arguments = constructor.getParameters().size();
+                                packagePrivate = constructor.isPackagePrivate();
+                                current = constructor;
+                                branchReached(5);
+                            } else {
+                                branchReached(6);
+                            }
+
+                            if (!constructor.isPackagePrivate()) {
+                                arguments = constructor.getParameters().size();
+                                packagePrivate = constructor.isPackagePrivate();
+                                current = constructor;
+                                branchReached(7);
+                            } else {
+                                branchReached(3);
+                            }
+                        } else {
+                            branchReached(4);
+                        }
                     }
-                }
-                if (current != null) {
-                    final MethodDescription.InDefinedShape selected = current;
-                    return new MethodVisitor(OpenedClassReader.ASM_API, methodVisitor) {
-                        @Override
-                        public void visitCode() {
-                            super.visitCode();
-                            /*
-                             * The byte code that is added to the start of the method is roughly equivalent to
-                             * the following byte code for a hypothetical constructor of class Current:
-                             *
-                             * if (MockMethodDispatcher.isConstructorMock(<identifier>, Current.class) {
-                             *   super(<default arguments>);
-                             *   Current o = (Current) MockMethodDispatcher.handleConstruction(Current.class,
-                             *       this,
-                             *       new Object[] {argument1, argument2, ...},
-                             *       new String[] {argumentType1, argumentType2, ...});
-                             *   if (o != null) {
-                             *     this.field = o.field; // for each declared field
-                             *   }
-                             *   return;
-                             * }
-                             *
-                             * This avoids the invocation of the original constructor chain but fullfils the
-                             * verifier requirement to invoke a super constructor.
-                             */
-                            Label label = new Label();
-                            super.visitLdcInsn(identifier);
-                            if (implementationContext
-                                    .getClassFileVersion()
-                                    .isAtLeast(ClassFileVersion.JAVA_V5)) {
-                                super.visitLdcInsn(Type.getType(instrumentedType.getDescriptor()));
-                            } else {
-                                super.visitLdcInsn(instrumentedType.getName());
-                                super.visitMethodInsn(
-                                        Opcodes.INVOKESTATIC,
-                                        Type.getInternalName(Class.class),
-                                        "forName",
-                                        Type.getMethodDescriptor(
-                                                Type.getType(Class.class),
-                                                Type.getType(String.class)),
-                                        false);
-                            }
-                            super.visitMethodInsn(
-                                    Opcodes.INVOKESTATIC,
-                                    Type.getInternalName(MockMethodDispatcher.class),
-                                    "isConstructorMock",
-                                    Type.getMethodDescriptor(
-                                            Type.BOOLEAN_TYPE,
-                                            Type.getType(String.class),
-                                            Type.getType(Class.class)),
-                                    false);
-                            super.visitInsn(Opcodes.ICONST_0);
-                            super.visitJumpInsn(Opcodes.IF_ICMPEQ, label);
-                            super.visitVarInsn(Opcodes.ALOAD, 0);
-                            for (TypeDescription type :
-                                    selected.getParameters().asTypeList().asErasures()) {
-                                if (type.represents(boolean.class)
-                                        || type.represents(byte.class)
-                                        || type.represents(short.class)
-                                        || type.represents(char.class)
-                                        || type.represents(int.class)) {
-                                    super.visitInsn(Opcodes.ICONST_0);
-                                } else if (type.represents(long.class)) {
-                                    super.visitInsn(Opcodes.LCONST_0);
-                                } else if (type.represents(float.class)) {
-                                    super.visitInsn(Opcodes.FCONST_0);
-                                } else if (type.represents(double.class)) {
-                                    super.visitInsn(Opcodes.DCONST_0);
+                    if (current != null) {
+                        branchReached(8);
+                        final MethodDescription.InDefinedShape selected = current;
+                        return new MethodVisitor(OpenedClassReader.ASM_API, methodVisitor) {
+                            @Override
+                            public void visitCode() {
+                                super.visitCode();
+                                /*
+                                 * The byte code that is added to the start of the method is roughly equivalent to
+                                 * the following byte code for a hypothetical constructor of class Current:
+                                 *
+                                 * if (MockMethodDispatcher.isConstructorMock(<identifier>, Current.class) {
+                                 *   super(<default arguments>);
+                                 *   Current o = (Current) MockMethodDispatcher.handleConstruction(Current.class,
+                                 *       this,
+                                 *       new Object[] {argument1, argument2, ...},
+                                 *       new String[] {argumentType1, argumentType2, ...});
+                                 *   if (o != null) {
+                                 *     this.field = o.field; // for each declared field
+                                 *   }
+                                 *   return;
+                                 * }
+                                 *
+                                 * This avoids the invocation of the original constructor chain but fullfils the
+                                 * verifier requirement to invoke a super constructor.
+                                 */
+                                Label label = new Label();
+                                super.visitLdcInsn(identifier);
+                                if (implementationContext
+                                        .getClassFileVersion()
+                                        .isAtLeast(ClassFileVersion.JAVA_V5)) {
+                                    super.visitLdcInsn(
+                                            Type.getType(instrumentedType.getDescriptor()));
+                                    branchReached(10);
                                 } else {
-                                    super.visitInsn(Opcodes.ACONST_NULL);
+                                    branchReached(11);
+                                    super.visitLdcInsn(instrumentedType.getName());
+                                    super.visitMethodInsn(
+                                            Opcodes.INVOKESTATIC,
+                                            Type.getInternalName(Class.class),
+                                            "forName",
+                                            Type.getMethodDescriptor(
+                                                    Type.getType(Class.class),
+                                                    Type.getType(String.class)),
+                                            false);
                                 }
-                            }
-                            super.visitMethodInsn(
-                                    Opcodes.INVOKESPECIAL,
-                                    selected.getDeclaringType().getInternalName(),
-                                    selected.getInternalName(),
-                                    selected.getDescriptor(),
-                                    false);
-                            super.visitLdcInsn(identifier);
-                            if (implementationContext
-                                    .getClassFileVersion()
-                                    .isAtLeast(ClassFileVersion.JAVA_V5)) {
-                                super.visitLdcInsn(Type.getType(instrumentedType.getDescriptor()));
-                            } else {
-                                super.visitLdcInsn(instrumentedType.getName());
                                 super.visitMethodInsn(
                                         Opcodes.INVOKESTATIC,
-                                        Type.getInternalName(Class.class),
-                                        "forName",
+                                        Type.getInternalName(MockMethodDispatcher.class),
+                                        "isConstructorMock",
                                         Type.getMethodDescriptor(
-                                                Type.getType(Class.class),
-                                                Type.getType(String.class)),
+                                                Type.BOOLEAN_TYPE,
+                                                Type.getType(String.class),
+                                                Type.getType(Class.class)),
                                         false);
-                            }
-                            super.visitVarInsn(Opcodes.ALOAD, 0);
-                            super.visitLdcInsn(instrumentedMethod.getParameters().size());
-                            super.visitTypeInsn(
-                                    Opcodes.ANEWARRAY, Type.getInternalName(Object.class));
-                            int index = 0;
-                            for (ParameterDescription parameter :
-                                    instrumentedMethod.getParameters()) {
-                                super.visitInsn(Opcodes.DUP);
-                                super.visitLdcInsn(index++);
-                                Type type =
-                                        Type.getType(
-                                                parameter.getType().asErasure().getDescriptor());
-                                super.visitVarInsn(
-                                        type.getOpcode(Opcodes.ILOAD), parameter.getOffset());
-                                if (parameter.getType().isPrimitive()) {
-                                    Type wrapper =
+                                super.visitInsn(Opcodes.ICONST_0);
+                                super.visitJumpInsn(Opcodes.IF_ICMPEQ, label);
+                                super.visitVarInsn(Opcodes.ALOAD, 0);
+                                for (TypeDescription type :
+                                        selected.getParameters().asTypeList().asErasures()) {
+                                    if (type.represents(boolean.class)) {
+                                        super.visitInsn(Opcodes.ICONST_0);
+                                        branchReached(28);
+                                    } else if (type.represents(byte.class)) {
+                                        super.visitInsn(Opcodes.ICONST_0);
+                                        branchReached(27);
+                                    } else if (type.represents(short.class)) {
+                                        super.visitInsn(Opcodes.ICONST_0);
+                                        branchReached(26);
+                                    } else if (type.represents(char.class)) {
+                                        super.visitInsn(Opcodes.ICONST_0);
+                                        branchReached(25);
+                                    } else if (type.represents(int.class)) {
+                                        super.visitInsn(Opcodes.ICONST_0);
+                                        branchReached(24);
+                                    } else if (type.represents(long.class)) {
+                                        super.visitInsn(Opcodes.LCONST_0);
+                                        branchReached(23);
+                                    } else if (type.represents(float.class)) {
+                                        super.visitInsn(Opcodes.FCONST_0);
+                                        branchReached(22);
+                                    } else if (type.represents(double.class)) {
+                                        branchReached(21);
+                                        super.visitInsn(Opcodes.DCONST_0);
+                                    } else {
+                                        branchReached(20);
+                                        super.visitInsn(Opcodes.ACONST_NULL);
+                                    }
+                                }
+                                super.visitMethodInsn(
+                                        Opcodes.INVOKESPECIAL,
+                                        selected.getDeclaringType().getInternalName(),
+                                        selected.getInternalName(),
+                                        selected.getDescriptor(),
+                                        false);
+                                super.visitLdcInsn(identifier);
+                                if (implementationContext
+                                        .getClassFileVersion()
+                                        .isAtLeast(ClassFileVersion.JAVA_V5)) {
+                                    super.visitLdcInsn(
+                                            Type.getType(instrumentedType.getDescriptor()));
+                                    branchReached(12);
+                                } else {
+                                    branchReached(13);
+                                    super.visitLdcInsn(instrumentedType.getName());
+                                    super.visitMethodInsn(
+                                            Opcodes.INVOKESTATIC,
+                                            Type.getInternalName(Class.class),
+                                            "forName",
+                                            Type.getMethodDescriptor(
+                                                    Type.getType(Class.class),
+                                                    Type.getType(String.class)),
+                                            false);
+                                }
+                                super.visitVarInsn(Opcodes.ALOAD, 0);
+                                super.visitLdcInsn(instrumentedMethod.getParameters().size());
+                                super.visitTypeInsn(
+                                        Opcodes.ANEWARRAY, Type.getInternalName(Object.class));
+                                int index = 0;
+                                for (ParameterDescription parameter :
+                                        instrumentedMethod.getParameters()) {
+                                    super.visitInsn(Opcodes.DUP);
+                                    super.visitLdcInsn(index++);
+                                    Type type =
                                             Type.getType(
                                                     parameter
                                                             .getType()
                                                             .asErasure()
-                                                            .asBoxed()
                                                             .getDescriptor());
-                                    super.visitMethodInsn(
-                                            Opcodes.INVOKESTATIC,
-                                            wrapper.getInternalName(),
-                                            "valueOf",
-                                            Type.getMethodDescriptor(wrapper, type),
-                                            false);
+                                    super.visitVarInsn(
+                                            type.getOpcode(Opcodes.ILOAD), parameter.getOffset());
+                                    if (parameter.getType().isPrimitive()) {
+                                        Type wrapper =
+                                                Type.getType(
+                                                        parameter
+                                                                .getType()
+                                                                .asErasure()
+                                                                .asBoxed()
+                                                                .getDescriptor());
+                                        super.visitMethodInsn(
+                                                Opcodes.INVOKESTATIC,
+                                                wrapper.getInternalName(),
+                                                "valueOf",
+                                                Type.getMethodDescriptor(wrapper, type),
+                                                false);
+                                        branchReached(14);
+                                    } else {
+                                        branchReached(19);
+                                    }
+                                    super.visitInsn(Opcodes.AASTORE);
                                 }
-                                super.visitInsn(Opcodes.AASTORE);
-                            }
-                            index = 0;
-                            super.visitLdcInsn(instrumentedMethod.getParameters().size());
-                            super.visitTypeInsn(
-                                    Opcodes.ANEWARRAY, Type.getInternalName(String.class));
-                            for (TypeDescription typeDescription :
-                                    instrumentedMethod.getParameters().asTypeList().asErasures()) {
+                                index = 0;
+                                super.visitLdcInsn(instrumentedMethod.getParameters().size());
+                                super.visitTypeInsn(
+                                        Opcodes.ANEWARRAY, Type.getInternalName(String.class));
+                                for (TypeDescription typeDescription :
+                                        instrumentedMethod
+                                                .getParameters()
+                                                .asTypeList()
+                                                .asErasures()) {
+                                    super.visitInsn(Opcodes.DUP);
+                                    super.visitLdcInsn(index++);
+                                    super.visitLdcInsn(typeDescription.getName());
+                                    super.visitInsn(Opcodes.AASTORE);
+                                }
+                                super.visitMethodInsn(
+                                        Opcodes.INVOKESTATIC,
+                                        Type.getInternalName(MockMethodDispatcher.class),
+                                        "handleConstruction",
+                                        Type.getMethodDescriptor(
+                                                Type.getType(Object.class),
+                                                Type.getType(String.class),
+                                                Type.getType(Class.class),
+                                                Type.getType(Object.class),
+                                                Type.getType(Object[].class),
+                                                Type.getType(String[].class)),
+                                        false);
+                                FieldList<FieldDescription.InDefinedShape> fields =
+                                        instrumentedType
+                                                .getDeclaredFields()
+                                                .filter(not(isStatic()));
+                                super.visitTypeInsn(
+                                        Opcodes.CHECKCAST, instrumentedType.getInternalName());
                                 super.visitInsn(Opcodes.DUP);
-                                super.visitLdcInsn(index++);
-                                super.visitLdcInsn(typeDescription.getName());
-                                super.visitInsn(Opcodes.AASTORE);
-                            }
-                            super.visitMethodInsn(
-                                    Opcodes.INVOKESTATIC,
-                                    Type.getInternalName(MockMethodDispatcher.class),
-                                    "handleConstruction",
-                                    Type.getMethodDescriptor(
-                                            Type.getType(Object.class),
-                                            Type.getType(String.class),
-                                            Type.getType(Class.class),
-                                            Type.getType(Object.class),
-                                            Type.getType(Object[].class),
-                                            Type.getType(String[].class)),
-                                    false);
-                            FieldList<FieldDescription.InDefinedShape> fields =
-                                    instrumentedType.getDeclaredFields().filter(not(isStatic()));
-                            super.visitTypeInsn(
-                                    Opcodes.CHECKCAST, instrumentedType.getInternalName());
-                            super.visitInsn(Opcodes.DUP);
-                            Label noSpy = new Label();
-                            super.visitJumpInsn(Opcodes.IFNULL, noSpy);
-                            for (FieldDescription field : fields) {
-                                super.visitInsn(Opcodes.DUP);
-                                super.visitFieldInsn(
-                                        Opcodes.GETFIELD,
-                                        instrumentedType.getInternalName(),
-                                        field.getInternalName(),
-                                        field.getDescriptor());
-                                super.visitVarInsn(Opcodes.ALOAD, 0);
-                                super.visitInsn(
-                                        field.getType().getStackSize() == StackSize.DOUBLE
-                                                ? Opcodes.DUP_X2
-                                                : Opcodes.DUP_X1);
+                                Label noSpy = new Label();
+                                super.visitJumpInsn(Opcodes.IFNULL, noSpy);
+                                for (FieldDescription field : fields) {
+                                    super.visitInsn(Opcodes.DUP);
+                                    super.visitFieldInsn(
+                                            Opcodes.GETFIELD,
+                                            instrumentedType.getInternalName(),
+                                            field.getInternalName(),
+                                            field.getDescriptor());
+                                    super.visitVarInsn(Opcodes.ALOAD, 0);
+                                    super.visitInsn(
+                                            field.getType().getStackSize() == StackSize.DOUBLE
+                                                    ? Opcodes.DUP_X2
+                                                    : Opcodes.DUP_X1);
+                                    super.visitInsn(Opcodes.POP);
+                                    super.visitFieldInsn(
+                                            Opcodes.PUTFIELD,
+                                            instrumentedType.getInternalName(),
+                                            field.getInternalName(),
+                                            field.getDescriptor());
+                                }
+                                super.visitLabel(noSpy);
+                                if (implementationContext
+                                        .getClassFileVersion()
+                                        .isAtLeast(ClassFileVersion.JAVA_V6)) {
+                                    branchReached(15);
+                                    Object[] locals =
+                                            toFrames(
+                                                    instrumentedType.getInternalName(),
+                                                    instrumentedMethod
+                                                            .getParameters()
+                                                            .asTypeList()
+                                                            .asErasures());
+                                    super.visitFrame(
+                                            Opcodes.F_FULL,
+                                            locals.length,
+                                            locals,
+                                            1,
+                                            new Object[] {instrumentedType.getInternalName()});
+                                } else {
+                                    branchReached(16);
+                                }
                                 super.visitInsn(Opcodes.POP);
-                                super.visitFieldInsn(
-                                        Opcodes.PUTFIELD,
-                                        instrumentedType.getInternalName(),
-                                        field.getInternalName(),
-                                        field.getDescriptor());
+                                super.visitInsn(Opcodes.RETURN);
+                                super.visitLabel(label);
+                                if (implementationContext
+                                        .getClassFileVersion()
+                                        .isAtLeast(ClassFileVersion.JAVA_V6)) {
+                                    branchReached(17);
+                                    Object[] locals =
+                                            toFrames(
+                                                    Opcodes.UNINITIALIZED_THIS,
+                                                    instrumentedMethod
+                                                            .getParameters()
+                                                            .asTypeList()
+                                                            .asErasures());
+                                    super.visitFrame(
+                                            Opcodes.F_FULL,
+                                            locals.length,
+                                            locals,
+                                            0,
+                                            new Object[0]);
+                                } else {
+                                    branchReached(18);
+                                }
                             }
-                            super.visitLabel(noSpy);
-                            if (implementationContext
-                                    .getClassFileVersion()
-                                    .isAtLeast(ClassFileVersion.JAVA_V6)) {
-                                Object[] locals =
-                                        toFrames(
-                                                instrumentedType.getInternalName(),
-                                                instrumentedMethod
-                                                        .getParameters()
-                                                        .asTypeList()
-                                                        .asErasures());
-                                super.visitFrame(
-                                        Opcodes.F_FULL,
-                                        locals.length,
-                                        locals,
-                                        1,
-                                        new Object[] {instrumentedType.getInternalName()});
-                            }
-                            super.visitInsn(Opcodes.POP);
-                            super.visitInsn(Opcodes.RETURN);
-                            super.visitLabel(label);
-                            if (implementationContext
-                                    .getClassFileVersion()
-                                    .isAtLeast(ClassFileVersion.JAVA_V6)) {
-                                Object[] locals =
-                                        toFrames(
-                                                Opcodes.UNINITIALIZED_THIS,
-                                                instrumentedMethod
-                                                        .getParameters()
-                                                        .asTypeList()
-                                                        .asErasures());
-                                super.visitFrame(
-                                        Opcodes.F_FULL, locals.length, locals, 0, new Object[0]);
-                            }
-                        }
 
-                        @Override
-                        public void visitMaxs(int maxStack, int maxLocals) {
-                            int prequel = Math.max(5, selected.getStackSize());
-                            for (ParameterDescription parameter :
-                                    instrumentedMethod.getParameters()) {
-                                prequel =
-                                        Math.max(
-                                                prequel,
-                                                6 + parameter.getType().getStackSize().getSize());
-                                prequel = Math.max(prequel, 8);
+                            @Override
+                            public void visitMaxs(int maxStack, int maxLocals) {
+                                int prequel = Math.max(5, selected.getStackSize());
+                                for (ParameterDescription parameter :
+                                        instrumentedMethod.getParameters()) {
+                                    prequel =
+                                            Math.max(
+                                                    prequel,
+                                                    6
+                                                            + parameter
+                                                                    .getType()
+                                                                    .getStackSize()
+                                                                    .getSize());
+                                    prequel = Math.max(prequel, 8);
+                                    branchReached(9);
+                                }
+                                super.visitMaxs(Math.max(maxStack, prequel), maxLocals);
                             }
-                            super.visitMaxs(Math.max(maxStack, prequel), maxLocals);
-                        }
-                    };
+                        };
+                    } else {
+                        branchReached(2);
+                    }
+                } else {
+                    branchReached(1);
                 }
+            } else {
+                branchReached(0);
             }
             return methodVisitor;
         }

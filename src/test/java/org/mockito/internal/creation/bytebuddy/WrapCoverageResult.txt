@@ -1,0 +1,31 @@
+[ArrayEquals.java] [@matches] Branch 0: False 
+[ArrayEquals.java] [@matches] Branch 1: True 
+[ArrayEquals.java] [@matches] Branch 2: False 
+[ArrayEquals.java] [@matches] Branch 3: True 
+[ArrayEquals.java] [@matches] Branch 4: True 
+[ArrayEquals.java] [@matches] Branch 5: True 
+[ArrayEquals.java] [@matches] Branch 6: True 
+[ArrayEquals.java] [@matches] Branch 7: True 
+[ArrayEquals.java] [@matches] Branch 8: True 
+[ArrayEquals.java] [@matches] Branch 9: True 
+[ArrayEquals.java] [@matches] Branch 10: True 
+[ArrayEquals.java] [@matches] Branch 11: False 
+[ArrayEquals.java] [@matches] Branch 12: True 
+[ArrayEquals.java] [@matches] Branch 13: False 
+[ArrayEquals.java] [@matches] Branch 14: True 
+[ArrayEquals.java] [@matches] Branch 15: True 
+[ArrayEquals.java] [@matches] Branch 16: True 
+[ArrayEquals.java] [@matches] Branch 17: True 
+[ArrayEquals.java] [@matches] Branch 18: False 
+[ArrayEquals.java] [@matches] Branch 19: True 
+[ArrayEquals.java] [@matches] Branch 20: True 
+[ArrayEquals.java] [@matches] Branch 21: False
+[ArrayEquals.java] [@matches] Branch 22: False 
+[ArrayEquals.java] [@matches] Branch 23: False 
+[ArrayEquals.java] [@matches] Branch 24: True 
+[ArrayEquals.java] [@matches] Branch 25: False
+[ArrayEquals.java] [@matches] Branch 26: False 
+[ArrayEquals.java] [@matches] Branch 27: False
+[ArrayEquals.java] [@matches] Branch 28: False
+
+[ArrayEquals.java] [@matches] Branch hits: 17 (58.6%)
